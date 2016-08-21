@@ -374,7 +374,7 @@ namespace mylib
         public override void OnStart()
         {
             // 创建通用函数对象
-            //m_gf = GF.GetGenericFun(this);
+            m_gf = GF.GetGenericFun(this);
 
             m_initOK = true;
             m_PriceTick = INSTRUMENT.PriceTick;
@@ -395,7 +395,7 @@ namespace mylib
             // 创建图表
             CreateChart("Main;测试.w_SLOWKD(15,4,2,5)");
 
-            //m_gf.PrintMemo("启动完成[GF]", GF.ENU_msgType.msg_Info);
+            m_gf.PrintMemo("启动完成[GF]", GF.ENU_msgType.msg_Info);
 
             //PrintMemo("启动完成", ENU_msgType.msg_Info);
             //base.OnStart(); 
