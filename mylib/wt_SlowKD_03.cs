@@ -139,11 +139,13 @@ namespace mylib
 
         private GF m_gf = null;                     // 通用函数对象
         
+        /*
         private enum ENU_msgType
         {
             msg_Error = 1,
             msg_Info = 2            
         }
+         */ 
 
         private enum ENU_CalculateModelEventType
         {
@@ -381,12 +383,12 @@ namespace mylib
             m_dtLastBarOpenTime = Now;
 
             // 打印合约信息
-            PrintInstrumentInfo();
+            m_gf.PrintInstrumentInfo();
 
             // 加载历史数据（本周期和大周期的）
             if (!LoadMyData()) m_initOK = false;
 
-            //TODO 检查加载的数据是否合规（是否有重复数据）            
+            //检查加载的数据是否合规（是否有重复数据）            
             if (!CheckDataValid()) m_initOK = false;
             
             // 获取本合约持仓头寸
@@ -395,9 +397,9 @@ namespace mylib
             // 创建图表
             CreateChart("Main;测试.w_SLOWKD(15,4,2,5)");
 
-            m_gf.PrintMemo("启动完成[GF]", GF.ENU_msgType.msg_Info);
+            //m_gf.PrintMemo("启动完成[GF]", ENU_msgType.msg_Info);
 
-            //PrintMemo("启动完成", ENU_msgType.msg_Info);
+            m_gf.PrintMemo("启动完成", ENU_msgType.msg_Info);
             //base.OnStart(); 
         }
 
@@ -405,7 +407,7 @@ namespace mylib
         {
             //PrintTodayTrade();
 
-            PrintMemo(SYMBOL + "[" + MyID + "] 停止运行");
+            m_gf.PrintMemo(SYMBOL + "[" + MyID + "] 停止运行");
             m_gf = null;
 
             base.OnStop();
@@ -441,10 +443,9 @@ namespace mylib
             if (!m_initOK)
             {
                 // 初始化未成功，事件不处理
-                PrintMemo("初始化未成功，请修正初始化错误的原因后，重启策略", ENU_msgType.msg_Error);
+                m_gf.PrintMemo("初始化未成功，请修正初始化错误的原因后，重启策略", ENU_msgType.msg_Error);
                 return;
-            }
-            //IO.PrintMemo("IO:时间[" + td.Date.ToString("HH:mm:ss") + "]"); 
+            }             
 
             m_gf.PrintMemo("IO:时间[" + td.Date.ToString("HH:mm:ss") + "]"); 
             PrintLine(TickNow.ToString("yyyy-MM-dd HH:mm:ss") + "[S]----------------------------------------");
@@ -462,9 +463,7 @@ namespace mylib
             }
             else
             {
-                PrintMemo("时间[" +  td.Date.ToString("HH:mm:ss") + "] 的BarOpen事件不处理");      
-          
-
+                m_gf.PrintMemo("时间[" + td.Date.ToString("HH:mm:ss") + "] 的BarOpen事件不处理");
             }
 
             // 其它动作
@@ -472,7 +471,7 @@ namespace mylib
             {
                 // 同步本地时间
                 //string sLocalDatetime = SyncTimeFromServer();
-                //PrintMemo("本地时间与服务器时间同步, 本地时间 => " + sLocalDatetime);            
+                //m_gf.PrintMemo("本地时间与服务器时间同步, 本地时间 => " + sLocalDatetime);            
             }
 
             DateTime t2 = Now;
@@ -483,14 +482,14 @@ namespace mylib
         public override void OnInstrumentStatusChanged(InstrumentStatus instStatus)
         {
             string msg = "[" + instStatus.InstrumentID + "] " + instStatus.EnterTime + " " + instStatus.EnterReason.ToString() + " " + instStatus.InstStatus.ToString();
-            PrintMemo(msg);
+            m_gf.PrintMemo(msg);
         }
                 
         public override void OnTrade(Trade trade)//有成交时执行
         {
             string msg = "成交: " + SYMBOL + " " + trade.Direction.ToString() + trade.OffsetFlag.ToString() + " " + trade.Price.ToString() + " * " + trade.Volume + " @ " + 
-                trade.TradeTime + "[" + trade.TradeID + ", " + trade.OrderSysID + "]";            
-            PrintMemo(msg);
+                trade.TradeTime + "[" + trade.TradeID + ", " + trade.OrderSysID + "]";
+            m_gf.PrintMemo(msg);
 
             // 判断是否还有未成交平仓单
             m_bCloseTimeOutStart = false;
@@ -522,9 +521,9 @@ namespace mylib
         }
 
         public override void OnPosition(Trade trade)//当平台设置里，设置为本地计算，才能触发。平台内部持仓信息更新后触发，在OnTrade后，也是策略隔离。
-        {   
+        {
             /*
-            PrintMemo("OnPosition{" + trade.Volume.ToString() + " * " + trade.Price.ToString() + "} [TradeID = " + trade.TradeID.ToString() + "] [" + "[OrderSysID = " +
+            m_gf.PrintMemo("OnPosition{" + trade.Volume.ToString() + " * " + trade.Price.ToString() + "} [TradeID = " + trade.TradeID.ToString() + "] [" + "[OrderSysID = " +
                 trade.OrderSysID.ToString() + "]", ENU_msgType.msg_Info);
             //PrintLine(trade.Volume);//打印成交的手数
             //PrintLine(trade.Price);//打印实际成交价格
@@ -536,11 +535,11 @@ namespace mylib
 
         public override void OnCancelOrderSucceeded(Order order)
         {
-            PrintMemo("撤单成功: " + SYMBOL + " " + order.OrderDirection.ToString() + order.OffsetFlag.ToString() + " " + order.StatusMsg);
+            m_gf.PrintMemo("撤单成功: " + SYMBOL + " " + order.OrderDirection.ToString() + order.OffsetFlag.ToString() + " " + order.StatusMsg);
 
             if (order.OffsetFlag == EnumOffsetFlagType.Close || order.OffsetFlag == EnumOffsetFlagType.CloseToday || order.OffsetFlag == EnumOffsetFlagType.CloseYesterday)
             {
-                PrintMemo("开始追平仓单");
+                m_gf.PrintMemo("开始追平仓单");
                 ResendCloseOrder(order, Close_SlipPoint, m_PriceTick);
             }
             //base.OnCancelOrderSucceeded(order);
@@ -600,7 +599,7 @@ namespace mylib
                 }
             }
 
-            PrintMemo(sInfo, bIsValid ? ENU_msgType.msg_Info : ENU_msgType.msg_Error);
+            m_gf.PrintMemo(sInfo, bIsValid ? ENU_msgType.msg_Info : ENU_msgType.msg_Error);
             return bIsValid;
         }
 
@@ -619,7 +618,7 @@ namespace mylib
                 if (m_Indicators.LongStopLossPrice > 0 && td.LastPrice < m_Indicators.LongStopLossPrice)
                 {
                     // 最新价 < 多头止损价 => 止损平仓
-                    PrintMemo("最新价[" + td.LastPrice.ToString() + "] < 多头止损价[" + Math.Round(m_Indicators.LongStopLossPrice, 2).ToString() + "] => 止损平仓 @ " + td.BidPrice1.ToString() + " * " + longPosition.ToString());
+                    m_gf.PrintMemo("最新价[" + td.LastPrice.ToString() + "] < 多头止损价[" + Math.Round(m_Indicators.LongStopLossPrice, 2).ToString() + "] => 止损平仓 @ " + td.BidPrice1.ToString() + " * " + longPosition.ToString());
                     CloseLongPosition(td.BidPrice1, longPosition, Close_SlipPoint, m_PriceTick);                    
                     //m_iOutCount++;
                 }
@@ -630,7 +629,7 @@ namespace mylib
                 if (m_Indicators.ShortStopLossPrice > 0 && td.LastPrice > m_Indicators.ShortStopLossPrice)
                 {
                     // 最新价 > 空头止损价 => 止损平仓
-                    PrintMemo("最新价[" + td.LastPrice.ToString() + "] > 空头止损价[" + Math.Round(m_Indicators.ShortStopLossPrice, 2) + "] => 止损平仓 @ " + td.AskPrice1.ToString() + " * " + shortPosition.ToString());
+                    m_gf.PrintMemo("最新价[" + td.LastPrice.ToString() + "] > 空头止损价[" + Math.Round(m_Indicators.ShortStopLossPrice, 2) + "] => 止损平仓 @ " + td.AskPrice1.ToString() + " * " + shortPosition.ToString());
                     CloseShortPosition(td.AskPrice1, shortPosition, Close_SlipPoint, m_PriceTick);                    
                     //m_iOutCount++;
                 }
@@ -658,7 +657,7 @@ namespace mylib
 
                                 if (Dt > Close_TimeOut)//超时未成交
                                 {
-                                    PrintMemo("有超时未成交平仓单");
+                                    m_gf.PrintMemo("有超时未成交平仓单");
                                     CancelOrder(order);         // 撤单                                    
                                 }
                             }
@@ -716,12 +715,12 @@ namespace mylib
                             // 若时间差 >= 1 Min 且 已触发需要BarOpen事件开关 => 触发 OnBarOpen事件
                             if (m_TickCountOfBarOpenDelay >= C_TickCountOfBarOpenDelay_Threshold)
                             {
-                                PrintMemo("已丢失一个OnBarOpen事件，现在手动触发[" + m_TickCountOfBarOpenDelay.ToString() + "] @ " + td.Date.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+                                m_gf.PrintMemo("已丢失一个OnBarOpen事件，现在手动触发[" + m_TickCountOfBarOpenDelay.ToString() + "] @ " + td.Date.ToString("yyyy-MM-dd HH:mm:ss.fff"));
                                 OnBarOpen(td);
                             }
                             else
                             {
-                                PrintMemo("检测到将丢失一个OnBarOpen事件，Tick Count = " + m_TickCountOfBarOpenDelay.ToString());
+                                m_gf.PrintMemo("检测到将丢失一个OnBarOpen事件，Tick Count = " + m_TickCountOfBarOpenDelay.ToString());
                             }
                         }
                     }
@@ -754,13 +753,13 @@ namespace mylib
                     if (td.Date.Hour == needCloseEventTime.Hour && td.Date.Minute == needCloseEventTime.Minute && td.Date.Second == needCloseEventTime.Second)
                     {
                         // 触发Bar Close 事件
-                        PrintMemo("额外处理时间[" + eventTime + "]事件");
+                        m_gf.PrintMemo("额外处理时间[" + eventTime + "]事件");
                         CalculateModel(td, ENU_CalculateModelEventType.ONBARCLOSE);
                     }
                 }
                 catch (Exception e)
                 {
-                    PrintMemo("额外处理事件中时间[" + eventTime + "]转换错误");
+                    m_gf.PrintMemo("额外处理事件中时间[" + eventTime + "]转换错误");
                 }
             }
         }
@@ -788,7 +787,7 @@ namespace mylib
                     }
                     catch(Exception e)
                     {
-                        PrintMemo("不需要处理事件中时间[" + eventTime + "]转换错误");
+                        m_gf.PrintMemo("不需要处理事件中时间[" + eventTime + "]转换错误");
                     }
                 }
             }
@@ -818,7 +817,7 @@ namespace mylib
                         
             if (m_bigPeriodEV == null)
             {
-                PrintMemo("未获取到大周期数据", ENU_msgType.msg_Error);
+                m_gf.PrintMemo("未获取到大周期数据", ENU_msgType.msg_Error);
                 return;
             }
                         
@@ -881,7 +880,7 @@ namespace mylib
             // 1. K线向下拐头            
             if (K0 < K1 && K1 > K2)
             {
-                PrintMemo("K线向下拐头");
+                m_gf.PrintMemo("K线向下拐头");
                 if (OffsetType == 2 && longPosition > 0)        // 平仓模型 = 2 且 有多头仓位
                 {
                     // 判断拐头前是否有K值 >= 极大值[80]
@@ -900,14 +899,14 @@ namespace mylib
                     if (bHaveExtreValue)    // K值有经过极大值线                            
                     {
                         // K值出现过极大值(>=80)且现在已经拐头 => 平多仓
-                        PrintMemo("K走势有超过极大值[" + ExtremeHighK.ToString() + "]线 => 平多头仓位 @ " + td.BidPrice1.ToString() + " * " + longPosition.ToString());
+                        m_gf.PrintMemo("K走势有超过极大值[" + ExtremeHighK.ToString() + "]线 => 平多头仓位 @ " + td.BidPrice1.ToString() + " * " + longPosition.ToString());
                         CloseLongPosition(td.BidPrice1, longPosition, Close_SlipPoint, m_PriceTick);
                         bHaveClosePosition = true;
                         m_iOutCount++;
                     }
                     else
                     {
-                        PrintMemo("K走势未超过极大值[" + ExtremeHighK.ToString() + "]线");
+                        m_gf.PrintMemo("K走势未超过极大值[" + ExtremeHighK.ToString() + "]线");
                     }
                 }
             }
@@ -915,7 +914,7 @@ namespace mylib
             // 2. K线向上拐头            
             if (K0 > K1 && K1 < K2)
             {
-                PrintMemo("K线向上拐头");
+                m_gf.PrintMemo("K线向上拐头");
                 if (OffsetType == 2 && shortPosition > 0)       // 平仓模型 = 2 且 有空头仓位
                 {
                     // 判断拐头前是否有K值 <= 极小值[20]
@@ -934,14 +933,14 @@ namespace mylib
                     if (bHaveExtreValue)    // K值有经过极小值线                            
                     {
                         // K值出现过极大值(<=80)且现在已经拐头 => 平空仓
-                        PrintMemo("K走势有超过极小值[" + ExtremeLowK.ToString() + "]线 => 平空头仓位 @ " + td.AskPrice1.ToString() + " * " + shortPosition.ToString());
+                        m_gf.PrintMemo("K走势有超过极小值[" + ExtremeLowK.ToString() + "]线 => 平空头仓位 @ " + td.AskPrice1.ToString() + " * " + shortPosition.ToString());
                         CloseShortPosition(td.AskPrice1, shortPosition, Close_SlipPoint, m_PriceTick);
                         bHaveClosePosition = true;
                         m_iOutCount++;
                     }
                     else
                     {
-                        PrintMemo("K走势未超过极小值[" + ExtremeLowK.ToString() + "]线");
+                        m_gf.PrintMemo("K走势未超过极小值[" + ExtremeLowK.ToString() + "]线");
                     }
                 }
             }
@@ -949,10 +948,10 @@ namespace mylib
             // 3. KD 金叉            
             if (K0 > D0 && K1 <= D1)
             {
-                PrintMemo("KD金叉");
+                m_gf.PrintMemo("KD金叉");
                 if ((!bHaveClosePosition) && shortPosition > 0)     // 此事件运行过程中未平过仓 且 有空头仓位  => 平空仓
                 {
-                    PrintMemo("平空头仓位 @ " + td.AskPrice1.ToString() + " * " + shortPosition.ToString());
+                    m_gf.PrintMemo("平空头仓位 @ " + td.AskPrice1.ToString() + " * " + shortPosition.ToString());
                     CloseShortPosition(td.AskPrice1, shortPosition, Close_SlipPoint, m_PriceTick);
                     bHaveClosePosition = true;
                     m_iOutCount++;
@@ -962,27 +961,27 @@ namespace mylib
                 switch (InType)
                 {
                     case 0:     // 不需要大周期上过滤即可开多单
-                        PrintMemo("不需要大周期上过滤");
+                        m_gf.PrintMemo("不需要大周期上过滤");
                         bEnterLong = true;
                         break;
                     case 1:     // 且需要大周期上 KD 金叉后 K向上走                        
                         if (bpK0 > bpD0 && bpK0 > bpK1 && bCanTradeOfRatio)
                         {
-                            PrintMemo("大周期上KD金叉后 K[0] > K[1]");
+                            m_gf.PrintMemo("大周期上KD金叉后 K[0] > K[1]");
                             bEnterLong = true;
                         }
                         break;
                     case 2:     // 且需要大周期上 (K[0] > K[1])                        
                         if (bpK0 > bpK1 && bCanTradeOfRatio)
                         {
-                            PrintMemo("大周期上 K[0] > K[1]");
+                            m_gf.PrintMemo("大周期上 K[0] > K[1]");
                             bEnterLong = true;
                         }
                         break;
                     case 3:     // 且需要大周期上 {K[0] > K[1] 或 K[0] > 50}                        
                         if ((bpK0 > bpK1 || bpK0 > 50) && bCanTradeOfRatio)
                         {
-                            PrintMemo("大周期上 K[0] > K[1] 或 K[0] > 50");
+                            m_gf.PrintMemo("大周期上 K[0] > K[1] 或 K[0] > 50");
                             bEnterLong = true;
                         }
                         break;
@@ -998,7 +997,7 @@ namespace mylib
                         
                         dOpenPrice = Refdata(CLOSE, iStartPos);
                         lots = CalculateLots(MaxLot, CapitalRatio, 0, dOpenPrice);      // 计算可开仓的仓位
-                        PrintMemo("满足开多条件 => 多头建仓 @ " + dOpenPrice.ToString() + " * " + lots.ToString());
+                        m_gf.PrintMemo("满足开多条件 => 多头建仓 @ " + dOpenPrice.ToString() + " * " + lots.ToString());
                         OpenOrder(dOpenPrice, lots, Open_SlipPoint, m_PriceTick, EnumDirectionType.Buy);
 
                         // 发送开多指令后，若N（默认=3）根K线后还没成交，则撤单
@@ -1007,7 +1006,7 @@ namespace mylib
                     }
                     else
                     {
-                        PrintMemo("已有多头仓位 [" + longPosition.ToString() + "]");
+                        m_gf.PrintMemo("已有多头仓位 [" + longPosition.ToString() + "]");
                     }
                 }
             }
@@ -1015,10 +1014,10 @@ namespace mylib
             // 4. KD死叉            
             if (K0 < D0 && K1 >= D1)
             {
-                PrintMemo("KD死叉");
+                m_gf.PrintMemo("KD死叉");
                 if ((!bHaveClosePosition) && longPosition > 0)      // 此事件运行过程中未平过仓 且 有多头仓位 => 平多仓
                 {
-                    PrintMemo("平多头仓位 @ " + td.BidPrice1.ToString() + " * " + longPosition.ToString());
+                    m_gf.PrintMemo("平多头仓位 @ " + td.BidPrice1.ToString() + " * " + longPosition.ToString());
                     CloseLongPosition(td.BidPrice1, longPosition, Close_SlipPoint, m_PriceTick);
                     bHaveClosePosition = true;
                     m_iOutCount++;
@@ -1028,27 +1027,27 @@ namespace mylib
                 switch (InType)
                 {
                     case 0:     // 不需要大周期上过滤即可开空单
-                        PrintMemo("不需要大周期上过滤");
+                        m_gf.PrintMemo("不需要大周期上过滤");
                         bEnterShort = true;
                         break;
                     case 1:     // 且需要大周期上KD死叉 且 K向下（K < D）                        
                         if (bpK0 < bpD0 && bpK0 < bpK1 && bCanTradeOfRatio)
                         {
-                            PrintMemo("大周期上死叉后 K[0] < K[1]");
+                            m_gf.PrintMemo("大周期上死叉后 K[0] < K[1]");
                             bEnterShort = true;
                         }
                         break;
                     case 2:     // 且需要大周期上 (K[0] < K[1])                        
                         if (bpK0 < bpK1 && bCanTradeOfRatio)
                         {
-                            PrintMemo("大周期上 K[0] < K[1]");
+                            m_gf.PrintMemo("大周期上 K[0] < K[1]");
                             bEnterShort = true;
                         }
                         break;
                     case 3:     // 且需要大周期上 {K[0] < K[1] 或 K[0] < 50}                        
                         if ((bpK0 < bpK1 || bpK0 < 50) && bCanTradeOfRatio)
                         {
-                            PrintMemo("大周期上 K[0] < K[1] 或 K[0] < 50");
+                            m_gf.PrintMemo("大周期上 K[0] < K[1] 或 K[0] < 50");
                             bEnterShort = true;
                         }
                         break;
@@ -1063,7 +1062,7 @@ namespace mylib
                     {                        
                         dOpenPrice = Refdata(CLOSE, iStartPos);
                         lots = CalculateLots(MaxLot, CapitalRatio, 0, dOpenPrice);      // 计算可开仓的仓位
-                        PrintMemo("满足开空条件 => 空头建仓 @ " + dOpenPrice.ToString() + " * " + lots.ToString());
+                        m_gf.PrintMemo("满足开空条件 => 空头建仓 @ " + dOpenPrice.ToString() + " * " + lots.ToString());
                         OpenOrder(dOpenPrice, lots, Open_SlipPoint, m_PriceTick, EnumDirectionType.Sell);
 
                         // 发送开多指令后，若N（默认=3）根K线后还没成交，则撤单
@@ -1072,7 +1071,7 @@ namespace mylib
                     }
                     else
                     {
-                        PrintMemo("已有空头仓位 [" + shortPosition.ToString() + "]");
+                        m_gf.PrintMemo("已有空头仓位 [" + shortPosition.ToString() + "]");
                     }
                 }
             }
@@ -1189,11 +1188,11 @@ namespace mylib
         {
             bool bLoadReault = true;
 
-            PrintMemo("计算本周期所对应的大周期", ENU_msgType.msg_Info);
+            m_gf.PrintMemo("计算本周期所对应的大周期", ENU_msgType.msg_Info);
             CalculateBigPeriod();
-            PrintMemo("  -> BigPeriod = " + m_bigPeriodRepeat.ToString() + m_bigPeriod.ToString());
+            m_gf.PrintMemo("  -> BigPeriod = " + m_bigPeriodRepeat.ToString() + m_bigPeriod.ToString());
 
-            PrintMemo("加载本周期历史数据[" + DataCycle.ToString() + " " + SYMBOL + "]", ENU_msgType.msg_Info);
+            m_gf.PrintMemo("加载本周期历史数据[" + DataCycle.ToString() + " " + SYMBOL + "]", ENU_msgType.msg_Info);
             UnLoadHisData();
             LoadHisData(SYMBOL, DataCycle.CycleBase, DataCycle.Repeat, 500);
 
@@ -1210,8 +1209,8 @@ namespace mylib
                 { 
                     m_bigPeriodEV = CreateSymbolData(SYMBOL, m_bigPeriod, m_bigPeriodRepeat);        // 加载本品种大周期的数据
                 }
-                                
-                PrintMemo("加载大周期历史数据[" + m_bigPeriodEV.DataCycle.ToString() + " " + SYMBOL + "]", ENU_msgType.msg_Info);                
+
+                m_gf.PrintMemo("加载大周期历史数据[" + m_bigPeriodEV.DataCycle.ToString() + " " + SYMBOL + "]", ENU_msgType.msg_Info);                
                 m_bigPeriodEV.LoadHisData(m_bigPeriod, m_bigPeriodRepeat, 500);
 
                 //this.time
@@ -1230,7 +1229,7 @@ namespace mylib
             else
             {
                 bLoadReault = false;
-                PrintMemo("计算本周期所对应的大周期发生错误", ENU_msgType.msg_Error);
+                m_gf.PrintMemo("计算本周期所对应的大周期发生错误", ENU_msgType.msg_Error);
             }
 
             return bLoadReault;
@@ -1312,7 +1311,7 @@ namespace mylib
             }
             else
             {
-                PrintMemo("委托剩余量为0，不需要重发");
+                m_gf.PrintMemo("委托剩余量为0，不需要重发");
                 return -1;
             }
         }
@@ -1327,7 +1326,7 @@ namespace mylib
             List<Order> ordLst = GetUnAllTradedOrderList(SYMBOL);
             if (ordLst != null && ordLst.Count > 0)
             {
-                PrintMemo("有未成交单[开仓] = " + ordLst.Count.ToString());
+                m_gf.PrintMemo("有未成交单[开仓] = " + ordLst.Count.ToString());
                 foreach (Order order in ordLst)
                 {
                     if (ORDER_KEY_LIST.Contains(order.Key))
@@ -1356,7 +1355,7 @@ namespace mylib
 
             if (ordLst != null && ordLst.Count > 0)
             {
-                PrintMemo("有未成交单[平仓] = " + ordLst.Count.ToString());
+                m_gf.PrintMemo("有未成交单[平仓] = " + ordLst.Count.ToString());
                 foreach (Order order in ordLst)
                 {
                     if (ORDER_KEY_LIST.Contains(order.Key))
@@ -1416,7 +1415,7 @@ namespace mylib
             //PrintMemo("获取" + SYMBOL + "[MyID: " + MyID + "]持仓头寸: ", ENU_msgType.msg_Info);
             //PrintMemo("  -> {多[今，昨], 空[今，昨]} = {" + longPosition.ToString() + "[" + m_longPosition_TD + ", " + m_longPosition_YD + "], " +
             //    shortPosition.ToString() + "[" + m_shortPosition_TD + ", " + m_shortPosition_YD + "]}");            
-            PrintMemo("获取[" + SYMBOL + "]持仓头寸: [多, 空] = [" + longPosition + ", " + shortPosition + "]", ENU_msgType.msg_Info);
+            m_gf.PrintMemo("获取[" + SYMBOL + "]持仓头寸: [多, 空] = [" + longPosition + ", " + shortPosition + "]", ENU_msgType.msg_Info);
         }
                 
 
@@ -1635,7 +1634,7 @@ namespace mylib
             }
             catch (Exception e)
             {
-                PrintMemo("写交易日志文件错误: " + e.Message, ENU_msgType.msg_Error);
+                m_gf.PrintMemo("写交易日志文件错误: " + e.Message, ENU_msgType.msg_Error);
             }
             finally
             { 
@@ -1644,6 +1643,7 @@ namespace mylib
             }
         }
 
+        /*
         private void PrintMemo(string msg, ENU_msgType msgType = ENU_msgType.msg_Info, bool bPrintTime = true)
         {
             string sType = "";
@@ -1672,6 +1672,7 @@ namespace mylib
                 PrintLine(sType + msg);
             }
         }
+         */ 
 
         private void PrintKD()
         {
@@ -1731,13 +1732,13 @@ namespace mylib
 
             if (m_bigPeriodEV != null)
             {
-                PrintMemo("加载数据结束:");
+                m_gf.PrintMemo("加载数据结束:");
 
                 msg = "\t\t" + "本周期[" + CLOSE.Length.ToString() + "]\t\t" + "\t大周期[" + m_bigPeriodEV.CLOSE.Length.ToString() + "]";
-                PrintMemo(msg);
+                m_gf.PrintMemo(msg);
 
                 msg = "\t\t" + "C[0]\t\t" + "C[1]\t\t" + "bpC[0]\t\t" + "bpC[1]";
-                PrintMemo(msg);
+                m_gf.PrintMemo(msg);
 
                 bar0 = this.GetBarData(BARCOUNT - 1);
                 bar1 = this.GetBarData(BARCOUNT - 2);
@@ -1745,51 +1746,21 @@ namespace mylib
                 bpBar1 = m_bigPeriodEV.GetBarData(m_bigPeriodEV.BARCOUNT - 2);
 
                 //msg = "\t时间:\t" + TIME.LASTDATA.ToString() + "\t\t" + REF(TIME, 1).LASTDATA.ToString() + "\t\t" + m_bigPeriodEV.TIME.LASTDATA.ToString() + "\t\t" + REF(m_bigPeriodEV.TIME, 1).LASTDATA.ToString();
-                //PrintMemo(msg);
+                //m_gf.PrintMemo(msg);
                 msg = "\t时间:\t" + bar0.CurDateTime.ToString("HH:mm:ss") + "\t" + bar1.CurDateTime.ToString("HH:mm:ss") + "\t" + bpBar0.CurDateTime.ToString("HH:mm:ss") + "\t" + bpBar1.CurDateTime.ToString("HH:mm:ss");
-                PrintMemo(msg);
+                m_gf.PrintMemo(msg);
                 
                 msg = "\t数值:\t" + bar0.Close.ToString() + "\t\t" + bar1.Close.ToString() + "\t\t" + bpBar0.Close.ToString() + "\t\t" + bpBar1.Close.ToString();
-                PrintMemo(msg);
+                m_gf.PrintMemo(msg);
             }
         }
-
-        private void PrintInstrumentInfo()
-        {
-            string msg = "------------------------ 合约信息 ------------------------";
-            PrintMemo(msg, ENU_msgType.msg_Info, false);
-
-            msg = "合约代码: " + INSTRUMENT.InstrumentID + "\t合约名称: " + INSTRUMENT.InstrumentName;
-            PrintMemo(msg, ENU_msgType.msg_Info, false);
-
-            //msg = "交易所多头保证金率: " + INSTRUMENT.LongMarginRatio.ToString() + "\t交易所空头保证金率: " + INSTRUMENT.ShortMarginRatio.ToString();
-            //PrintMemo(msg, ENU_msgType.msg_Info, false);
-
-            msg = "期货公司多头保证金率: " + INSTRUMENT.LongMarginRatioByMoney.ToString("P") + "\t期货公司空头保证金率: " + INSTRUMENT.ShortMarginRatioByMoney.ToString("P");
-            PrintMemo(msg, ENU_msgType.msg_Info, false);
-
-
-            if (INSTRUMENT.OpenRatioByVolume > 0.1)
-            {
-                msg = "开仓手续费: " + INSTRUMENT.OpenRatioByVolume.ToString() + "\t平仓手续费: " + INSTRUMENT.CloseRatioByVolume.ToString() + "\t平今手续费: " + INSTRUMENT.CloseTodayRatioByVolume.ToString();
-            }
-            else
-            {
-                msg = "开仓手续费: " + (INSTRUMENT.OpenRatioByMoney * 1000).ToString() + "‰" + "\t平仓手续费: " + (INSTRUMENT.CloseRatioByMoney * 1000).ToString() + "‰" +
-                    "\t平今手续费: " + (INSTRUMENT.CloseTodayRatioByMoney * 1000).ToString() + "‰";
-            }
-            PrintMemo(msg, ENU_msgType.msg_Info, false);
-
-            msg = "---------------------------------------------------------";
-            PrintMemo(msg, ENU_msgType.msg_Info, false);                
-        }
-
+        
         private void PrintTodayTradeStatus()
         {
             string msg = "";
 
             msg = "入场次数 = " + m_iInCount.ToString() + "\t平仓次数 = " + m_iOutCount.ToString();
-            PrintMemo(msg);
+            m_gf.PrintMemo(msg);
         }
 
         /// <summary>

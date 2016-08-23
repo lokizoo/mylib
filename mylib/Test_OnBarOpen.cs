@@ -48,9 +48,10 @@ namespace mylib
         {
             // -------------------------------------------------------------------
             // 测试未成交的挂单
-            m_iTickCount++;
-            PrintLine("TickCoount = " + m_iTickCount);
+            //m_iTickCount++;
+            //PrintLine("TickCoount = " + m_iTickCount);
 
+            /*
             // 买入测试头寸
             if (m_iTickCount == 20)
             {
@@ -70,7 +71,7 @@ namespace mylib
             // 检查是否有超时未成交的挂单（平仓单）
             CheckAllOrder_Timeout();
             // -------------------------------------------------------------------
-
+            */
         }
 
         public override void OnOrderReturn(Order order)
@@ -87,6 +88,11 @@ namespace mylib
         public override void OnPosition(Trade trade)
         {
             PrintLine("OnPosition");
+        }
+
+        public override void OnCancelOrderSucceeded(Order order)
+        {
+            PrintLine("OnCancelOrderSucceeded");
         }
 
         private void GetPosition()
