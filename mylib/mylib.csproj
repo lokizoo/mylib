@@ -16,7 +16,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\..\Program Files\Finance\红璟\Strategy\</OutputPath>
+    <OutputPath>..\..\红璟\红璟程序化交易平台\Strategy\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -31,7 +31,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="DevelopLibrary">
-      <HintPath>..\..\..\..\Program Files\Finance\红璟\DevelopLibrary.dll</HintPath>
+      <HintPath>..\..\dlls\DevelopLibrary.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -53,11 +53,13 @@
     <ProjectReference Include="..\TradePubLib\TradePubLib.csproj">
       <Project>{e328e8d3-a3cb-4f23-b36a-105cad215534}</Project>
       <Name>TradePubLib</Name>
+      <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "D:\Program Files\Finance\红璟\Strategy" "X:\股票财经\红璟\patch files\Strategy" /S /Y</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
