@@ -200,16 +200,17 @@ namespace TradePubLib
         /// <param name="f"></param>
         /// <param name="iPos"></param>
         /// <returns></returns>
-        public static int FindSunkenRegion_Left(DataArray f, int iPos)
+        public static int FindSunkenRegion_Left(DataArray f, int iPos, int iEndPos = 0)
         {
             int pos = -1;
             if (iPos < 0) iPos = 0;
+            if (iEndPos < 0) iEndPos = 0;
             if (iPos > f.Length) iPos = f.Length - 1;
 
             if (f.Length > 0)
             {
                 pos = 0;
-                for (int i = iPos - 1; i >= 0; i--)
+                for (int i = iPos - 1; i >= iEndPos; i--)
                 {
                     if (f[i] > f[iPos])
                     {
@@ -251,19 +252,21 @@ namespace TradePubLib
         /// <summary>
         /// 在指定位置向左寻找凸区间（左边界点的值 < 起始位置的值)
         /// </summary>
-        /// <param name="f"></param>
-        /// <param name="iPos"></param>
+        /// <param name="f">数据数组</param>
+        /// <param name="iPos">起始点</param>
+        /// <param name="iEndPos">结束点</param>
         /// <returns></returns>
-        public static int FindBulgeRegion_Left(DataArray f, int iPos)
+        public static int FindBulgeRegion_Left(DataArray f, int iPos, int iEndPos = 0)
         {
             int pos = -1;
             if (iPos < 0) iPos = 0;
+            if (iEndPos < 0) iEndPos = 0;
             if (iPos > f.Length) iPos = f.Length - 1;
 
             if (f.Length > 0)
             {
                 pos = 0;
-                for (int i = iPos - 1; i >= 0; i--)
+                for (int i = iPos - 1; i >= iEndPos; i--)
                 {
                     if (f[i] < f[iPos])
                     {

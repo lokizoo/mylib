@@ -9,9 +9,11 @@ namespace TradePubLib
 {
     public enum ENU_Extreme_Type
     {
-        EXTREME_TYPE_NONE,      // 非极值点
-        EXTREME_TYPE_HIGH,      // 极高点
-        EXTREME_THPE_LOW        // 极低点
+        EXTREME_TYPE_NONE,                  // 非极值点
+        EXTREME_TYPE_NONE_BUT_LLOW,         // 非极值点,但是比前极低点更低
+        EXTREME_TYPE_NONE_BUT_HHIGH,        // 非极值点,但是比前极高点点更高
+        EXTREME_TYPE_HIGH,                  // 极高点
+        EXTREME_THPE_LOW,                   // 极低点
     }
 
     public enum ENU_msgType
@@ -105,10 +107,7 @@ namespace TradePubLib
 
             msg = "合约代码: " + instrument.InstrumentID + "\t合约名称: " + instrument.InstrumentName;
             PrintMemo(msg, ENU_msgType.msg_Info, false);
-
-            //msg = "交易所多头保证金率: " + instrument.LongMarginRatio.ToString() + "\t交易所空头保证金率: " + instrument.ShortMarginRatio.ToString();
-            //m_gf.PrintMemo(msg, GF.ENU_msgType.msg_Info, false);
-
+            
             msg = "期货公司多头保证金率: " + instrument.LongMarginRatioByMoney.ToString("P") + "\t期货公司空头保证金率: " + instrument.ShortMarginRatioByMoney.ToString("P");
             PrintMemo(msg, ENU_msgType.msg_Info, false);
             
@@ -161,7 +160,7 @@ namespace TradePubLib
     {
         public ENU_Extreme_Type ExtremeType;        
         public int BarPosition;
-        public bool Visible;
+        public bool Visible = true;
 
         public double ExtremePrice
         {
@@ -177,14 +176,58 @@ namespace TradePubLib
                         price = this.High;
                         break;
                     case ENU_Extreme_Type.EXTREME_TYPE_NONE:
-                        price = 0;
+                        price = double.NaN;
                         break;
                     default:
-                        price = 0;
+                        price = double.NaN;
                         break;
                 }
                 return price;
             }
+        }
+
+        public ExtremePoint(BarData bar)
+        {
+            if (bar != null)
+            {
+                this.AdjClose = bar.AdjClose;
+                this.Amount = bar.Amount;
+                this.AskPrice1 = bar.AskPrice1;
+                this.AskVolume1 = bar.AskVolume1;
+                this.AveragePrice = bar.AveragePrice;
+                this.BidPrice1 = bar.BidPrice1;
+                this.BidVolume1 = bar.BidVolume1;
+                this.Close = bar.Close;
+                this.CurDateTime = bar.CurDateTime;
+                this.CurrDelta = bar.CurrDelta;
+                this.High = bar.High;
+                this.HighestPrice = bar.HighestPrice;
+                this.Low = bar.Low;
+                this.LowerLimitPrice = bar.LowerLimitPrice;
+                this.LowestPrice = bar.LowestPrice;
+                this.Open = bar.Open;
+                this.OpenInterest = bar.OpenInterest;
+                this.OpenPrice = bar.OpenPrice;
+                this.PreClosePrice = bar.PreClosePrice;
+                this.PreDelta = bar.PreDelta;
+                this.PreOpenInterest = bar.PreOpenInterest;
+                this.PreSettlementPrice = bar.PreSettlementPrice;
+                this.UpperLimitPrice = bar.UpperLimitPrice;
+                this.Volume = bar.Volume;                
+            }
+        }
+        public ExtremePoint()
+        {            
+        }
+
+        public override string ToString()
+        {            
+            string sPre = this.ExtremeType == ENU_Extreme_Type.EXTREME_TYPE_HIGH ? "HH" : "LL";
+            string sVisual = this.Visible == true ? "Y" : "N";
+            double dPrice = this.ExtremeType == ENU_Extreme_Type.EXTREME_TYPE_HIGH ? this.High : this.Low;
+
+            string sInfo = sPre + "[T: " + this.CurDateTime.ToString("yyyy-MM-dd HH:mm:ss" + " V: " + sVisual + " P: " + dPrice + "]");
+            return sInfo;
         }
 
     }
