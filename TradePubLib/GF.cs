@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DevelopLibrary.DevelopAPI;
+using DevelopLibrary.Enums;
 
 namespace TradePubLib
 {
@@ -83,6 +84,75 @@ namespace TradePubLib
             return bIsValid;
         }
 
+
+        public int OpenOrder(double price, int volume, int slipPoint, EnumDirectionType direction)
+        {
+            double orderPrice = 0;
+            int returnValue = 0;
+            double priceTick = m_strategyObj.INSTRUMENT.PriceTick;
+
+            if (direction == EnumDirectionType.Buy)         // 开多单
+            {
+                orderPrice = price + slipPoint * priceTick;
+                returnValue = m_strategyObj.OpenBuy(orderPrice, volume, m_strategyObj.SYMBOL);
+            }
+            else if (direction == EnumDirectionType.Sell)   // 开空单
+            {
+                orderPrice = price - slipPoint * priceTick;
+                returnValue = m_strategyObj.OpenSell(orderPrice, volume, m_strategyObj.SYMBOL);
+            }
+
+            return returnValue;
+        }
+
+        /// <summary>
+        /// 计算可开仓的头寸
+        /// </summary>
+        /// <param name="maxLots">最大头寸</param>
+        /// <param name="capitalRatio">
+        /// 资金使用比率:
+        ///     [0, 1]: 采用百分比计算方法
+        ///     > 1 : 采用固定资金计算方法
+        /// </param>
+        /// <param name="totalCapital"></param>
+        /// <param name="openPrice"></param>
+        /// <returns></returns>
+        private int CalculateLots(int maxLots, double capitalRatio, double totalCapital, double openPrice)
+        {
+            int lots = 0;
+            Instrument instrument = m_strategyObj.INSTRUMENT;
+
+            if (capitalRatio < 0) capitalRatio = 0;
+            if (totalCapital < 0) totalCapital = 0;            
+
+            if (capitalRatio <= 1)
+            {
+                // 百分比计算方法
+                // 头寸 = 资金 * 资金使用比率 / (开仓价 * 每手合约乘数 * 保证金率)
+                if (openPrice > 0)
+                {
+                    lots = (int)Math.Round(totalCapital * capitalRatio / (openPrice * instrument.VolumeMultiple * Math.Max(instrument.LongMarginRatioByMoney, instrument.ShortMarginRatioByMoney)), 0);
+                }
+            }
+            else
+            {
+                // 固定资金计算方法
+                // 头寸 = 资金 / 资金使用比率 
+                lots = (int)Math.Round(totalCapital / capitalRatio);
+            }
+
+            // 不能超过最大可开仓头寸设置
+            if (lots > maxLots) lots = maxLots;
+            if (lots <= 1) lots = 1;
+
+            return lots;
+        }
+
+        public string BulidStagetyInstanceID(string sStragetyID)
+        {
+            string sInstanceID = sStragetyID + m_strategyObj.INSTRUMENT.InstrumentID + m_strategyObj.DataCycle.Repeat + m_strategyObj.DataCycle.CycleBase.ToString();
+            return sInstanceID;
+        }
 
         /// <summary>
         /// 获取本策略本品种的所有持仓

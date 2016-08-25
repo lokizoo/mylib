@@ -1277,7 +1277,7 @@ namespace mylib
             }
 
             // 不能超过最大可开仓头寸设置
-            if (lots > MaxLot) lots = maxLots;
+            if (lots > maxLots) lots = maxLots;
             if (lots <= 1) lots = 1;
 
             return lots;

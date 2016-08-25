@@ -38,6 +38,10 @@ namespace mylib
             get { return SERVERTIME; }
         }
 
+        public override void OnStart()
+        {
+            CreateChart("基础.Main#基础.MA(120)#基础.MA(240);成交量.VOLMA(60)");   //"#"表示这一组指标在同一个区域,";"表示在不同区域。                     
+        }
 
         public override void OnBarOpen(TickData td)
         {
@@ -46,11 +50,12 @@ namespace mylib
 
         public override void OnTick(TickData td)
         {
+            
+            m_iTickCount++;
+            PrintLine("TickCoount = " + m_iTickCount);
+
             // -------------------------------------------------------------------
             // 测试未成交的挂单
-            //m_iTickCount++;
-            //PrintLine("TickCoount = " + m_iTickCount);
-
             /*
             // 买入测试头寸
             if (m_iTickCount == 20)
@@ -72,6 +77,15 @@ namespace mylib
             CheckAllOrder_Timeout();
             // -------------------------------------------------------------------
             */
+
+            if (m_iTickCount == 20)
+            {
+                DrawText(LASTDOUBLEDATE, C.LASTVALUE, "这是第20个tick");
+            }
+            else if (m_iTickCount == 60)
+            {
+                DrawImage(LASTDOUBLEDATE, C.LASTVALUE, EnumDrawImageType.UP);
+            }
         }
 
         public override void OnOrderReturn(Order order)
