@@ -153,7 +153,7 @@ namespace TradePubLib
             string sInstanceID = sStragetyID + m_strategyObj.INSTRUMENT.InstrumentID + m_strategyObj.DataCycle.Repeat + m_strategyObj.DataCycle.CycleBase.ToString();
             return sInstanceID;
         }
-
+                
         /// <summary>
         /// 获取本策略本品种的所有持仓
         /// </summary>
