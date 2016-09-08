@@ -50,6 +50,11 @@ namespace mylib
         #endregion
 
 
+        private double m_ATRValue = 0;          // 策略中需要的ATR值
+
+        private int m_longPosition = 0;         // 本品种本策略所持的多头仓位
+        private int m_shortPosition = 0;        // 本品种本策略所持的空头仓位
+        
         private string m_StragetyInstanceID = "";   // 策略实例识别码, 通过此识别码来区分持仓是否为此策略实例所拥有
         private bool m_initOK = true;               // OnStart事件中初始化是否成功
         
@@ -57,11 +62,7 @@ namespace mylib
         public override void OnStart()
         {
             DateTime t1 = Now;
-
-            // 创建通用函数对象
-            //m_gf = GF.GetGenericFun(this);
-
-
+            
             m_initOK = true;            
             m_StragetyInstanceID = BulidStagetyInstanceID(P_StragetyID);       // 生成策略实例识别码(策略ID + 合约 + 周期)
 
@@ -83,19 +84,143 @@ namespace mylib
                 PrintMemo(sInfo, ENU_msgType.msg_Error);
             }
 
-            // 获取本合约持仓头寸
-            //GetPosition();
+            CalculatePos();
 
             if (m_initOK)
             {
                 
             }
+
             // 创建图表
-            //CreateChart("Main;测试.w_SLOWKD(15,4,2,5)");
             CreateChart("Main");
+
             DateTime t2 = Now;
             PrintMemo("启动完成[" + (t2 - t1).TotalMilliseconds + " ms]", ENU_msgType.msg_Info);
         }
-               
+
+        private void CalculatePos()
+        {
+            // 获取本合约持仓头寸
+            Position longPosition = null;
+            Position shortPosition = null;
+            GetPositionOfStrategy(m_StragetyInstanceID, longPosition, shortPosition);
+
+            if (longPosition != null) m_longPosition = longPosition.TodayPosition + longPosition.YdPosition;
+            if (shortPosition != null) m_shortPosition = shortPosition.TodayPosition + shortPosition.YdPosition;
+        }
+
+        public override void OnBarOpen(TickData td)
+        {
+            double dOpenPrice = 0;
+            int lots = 0;
+            double totalCapital = 0;
+
+            BarData bar = GetBarData(BARCOUNT - 2);
+
+            if (P_StartWith > 0 && m_longPosition <= 0)
+            {
+                if (bar.Close > bar.Open)
+                {
+                    // 开多单                    
+                    FuturesAccount fa = GetFuturesAccount();
+                    totalCapital = fa.DynamicProfit;
+                    dOpenPrice = bar.Close;
+                    lots = CalculateLots(P_MaxLot, P_CapitalRatio, totalCapital, dOpenPrice);      // 计算可开仓的仓位
+                    PrintMemo("建头个仓位 => 多头建仓 @ " + dOpenPrice.ToString() + " * " + lots.ToString());
+                    OpenOrder(dOpenPrice, lots, P_Open_SlipPoint, EnumDirectionType.Buy);
+                }
+            }
+            else if (P_StartWith < 0 && m_shortPosition <= 0)
+            {
+                if (bar.Close < bar.Open)
+                {
+                    // 开空单
+                    FuturesAccount fa = GetFuturesAccount();
+                    totalCapital = fa.DynamicProfit;
+                    dOpenPrice = bar.Close;
+                    lots = CalculateLots(P_MaxLot, P_CapitalRatio, totalCapital, dOpenPrice);
+                    PrintMemo("建头个仓位 => 空头建仓 @ " + dOpenPrice.ToString() + " * " + lots.ToString());
+                    OpenOrder(dOpenPrice, lots, P_Open_SlipPoint, EnumDirectionType.Sell);
+                }
+            }
+
+            // 计算ATR值
+            m_ATRValue = AtrData(P_ATR_Period, 1);
+        }
+
+        public override void OnTick(TickData td)
+        {
+            if (m_longPosition > 0 || m_shortPosition > 0)
+            {
+                AdjustSLTP(td);
+            }
+
+            if (m_longPosition > 0)
+            {
+                
+            }
+        }
+
+        public override void OnTrade(Trade trade)
+        {
+            string msg = "成交: " + SYMBOL + " " + trade.Direction.ToString() + trade.OffsetFlag.ToString() + " " + trade.Price.ToString() + " * " + trade.Volume + " @ " +
+                trade.TradeTime + "[" + trade.TradeID + ", " + trade.OrderSysID + "]";
+            PrintMemo(msg);
+
+            // 设置止盈止损            
+            double dStopLossPrice = 0;            
+
+            if (trade.Direction == EnumDirectionType.Buy)
+            {
+                // 多单
+                dStopLossPrice = AdjustFuturePrice(trade.Price  -  m_ATRValue * P_ATR_Multiplier -  INSTRUMENT.PriceTick);                
+            }
+            else if (trade.Direction == EnumDirectionType.Sell)
+            {
+                // 空单
+                dStopLossPrice = AdjustFuturePrice(trade.Price + m_ATRValue * P_ATR_Multiplier + INSTRUMENT.PriceTick);                
+            }
+
+            PrintMemo("设置止损价 = " + dStopLossPrice);
+            SetTakeProfitStopLoss(SYMBOL, trade.Direction, dStopLossPrice, trade.Volume, double.NaN, double.NaN, double.NaN);
+            // 写成交日志
+        }
+
+        public override void OnPosition(Trade trade)
+        {
+            CalculatePos();
+        }
+
+        private void AdjustSLTP(TickData td)
+        {
+            double dSetSL = 0;
+            double dCalculateSL = 0;
+
+            Position longPosition = null;
+            Position shortPosition = null;
+            GetPositionOfStrategy(m_StragetyInstanceID, longPosition, shortPosition);
+
+            if (longPosition != null && longPosition.YdPosition + longPosition.TodayPosition > 0)
+            {
+                dSetSL = longPosition.StopLossPrice;
+                dCalculateSL = AdjustFuturePrice(td.BidPrice1 - m_ATRValue * P_ATR_Multiplier - INSTRUMENT.PriceTick);
+
+                if (dCalculateSL > dSetSL || dSetSL == double.NaN)
+                {
+                    SetTakeProfitStopLoss(SYMBOL, EnumDirectionType.Buy, dCalculateSL, longPosition.YdPosition + longPosition.TodayPosition, double.NaN, double.NaN, double.NaN);                    
+                }                
+            }
+
+            if (shortPosition != null && shortPosition.YdPosition + shortPosition.TodayPosition > 0)
+            {
+                dSetSL = shortPosition.StopLossPrice;
+                dCalculateSL = AdjustFuturePrice(td.AskPrice1 + m_ATRValue * P_ATR_Multiplier + INSTRUMENT.PriceTick);
+
+                if (dCalculateSL < dSetSL || dSetSL == double.NaN)
+                {
+                    SetTakeProfitStopLoss(SYMBOL, EnumDirectionType.Sell, dCalculateSL, shortPosition.YdPosition + shortPosition.TodayPosition, double.NaN, double.NaN, double.NaN);                    
+                }
+            }
+        }
     }
 }

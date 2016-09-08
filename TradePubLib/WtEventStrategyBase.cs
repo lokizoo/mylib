@@ -161,6 +161,81 @@ namespace TradePubLib
             return bLoadReault;
         }
 
+        /// <summary>
+        /// 获取本策略本品种的所有持仓
+        /// </summary>
+        /// <param name="sStrategyID">策略ID</param>
+        /// <param name="longPosition">返回多头持仓</param>
+        /// <param name="shortPosition">返回空头持仓</param>
+        /// <returns>空头和多头的仓位和</returns>
+        public int GetPositionOfStrategy(string sStrategyID, Position longPosition, Position shortPosition)
+        {
+            // TODO
+
+            int positionSum = 0;
+            longPosition = null;
+            shortPosition = null;
+
+            // 获取本策略开仓的具体仓位    
+            longPosition = GetPosition(SYMBOL, DevelopLibrary.Enums.EnumDirectionType.Buy);
+            shortPosition = GetPosition(SYMBOL, DevelopLibrary.Enums.EnumDirectionType.Sell);
+
+            if (longPosition != null)
+            {
+                positionSum += longPosition.TodayPosition + longPosition.YdPosition;
+            }
+
+            if (shortPosition != null)
+            {
+                positionSum += shortPosition.TodayPosition + shortPosition.YdPosition;
+            }
+
+            return positionSum;
+        }
+
+        /// <summary>
+        /// 计算K线的平均真实波动幅度
+        /// </summary>
+        /// <param name="ev">K线数据</param>
+        /// <param name="atrLength">ATR长度</param>
+        /// <param name="offset">偏移量（从第几根K线起[最新一根为0])</param>
+        /// <returns></returns>
+        public double AtrData(int atrLength, int offset)
+        {
+            double atrValue = 0;
+            int loop = 0;
+            double tmpPreClose = 0;
+            double tmpHigh = 0;
+            double tmpLow = 0;
+            double sumTR = 0;
+
+            if (CLOSE.Length >= atrLength + offset + 1)   // 数据量足够
+            {
+                loop = atrLength;
+            }
+            else
+            {
+                loop = CLOSE.Length - offset - 1;
+            }
+
+            if (loop > 0)
+            {
+                //double[] trs = new double[loop];
+                for (int i = 0; i < loop; i++)
+                {
+                    tmpHigh = SF.Refdata(HIGH, offset + i);
+                    tmpLow = SF.Refdata(LOW, offset + i);
+                    tmpPreClose = SF.Refdata(CLOSE, offset + i + 1);
+
+                    sumTR += MAX(ABS(tmpHigh - tmpLow), ABS(tmpPreClose - tmpHigh), ABS(tmpPreClose - tmpLow));
+                }
+
+                atrValue = sumTR / loop;
+            }
+
+            return atrValue;
+        }
+
         public void PrintMemo(string msg, ENU_msgType msgType = ENU_msgType.msg_Info, bool bPrintTime = true)
         {
             string sType = "";
