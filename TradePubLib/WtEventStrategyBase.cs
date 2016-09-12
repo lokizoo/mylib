@@ -168,7 +168,7 @@ namespace TradePubLib
         /// <param name="longPosition">返回多头持仓</param>
         /// <param name="shortPosition">返回空头持仓</param>
         /// <returns>空头和多头的仓位和</returns>
-        public int GetPositionOfStrategy(string sStrategyID, Position longPosition, Position shortPosition)
+        public int GetPositionOfStrategy(string sStrategyID, out Position longPosition, out Position shortPosition)
         {
             // TODO
 
