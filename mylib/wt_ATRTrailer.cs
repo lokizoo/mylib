@@ -65,7 +65,8 @@ namespace mylib
         public override void OnStart()
         {
             DateTime t1 = Now;
-            
+            base.OnStart();
+
             m_initOK = true;            
             m_StragetyInstanceID = BulidStagetyInstanceID(P_StragetyID);       // 生成策略实例识别码(策略ID + 合约 + 周期)
 
@@ -101,8 +102,7 @@ namespace mylib
             DateTime t2 = Now;
             PrintMemo("启动完成[" + (t2 - t1).TotalMilliseconds + " ms]", ENU_msgType.msg_Info);
         }
-
-        
+                
 
         public override void OnBarOpen(TickData td)
         {
@@ -112,6 +112,7 @@ namespace mylib
 
             // 计算ATR值
             m_ATRValue = AtrData(P_ATR_Period, 1);
+            PrintATR();
 
             BarData bar = GetBarData(BARCOUNT - 2);
             if (m_longPosition + m_shortPosition > 0)
@@ -280,6 +281,14 @@ namespace mylib
                     m_oShortPosition.StopLossPrice = dCalculateSL;
                 }
             }
+        }
+
+        private void PrintATR()
+        {
+            string msg = "";
+
+            msg = SYMBOL + "[" + m_StragetyInstanceID + "]:\t" + "ATR(" + P_ATR_Period + ") = " + m_ATRValue;
+            PrintMemo(msg, ENU_msgType.msg_Info, true);
         }
     }
 }

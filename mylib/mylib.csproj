@@ -49,6 +49,7 @@
     <Compile Include="wt_B2.cs" />
     <Compile Include="wt_R_Breaker.cs" />
     <Compile Include="wt_SlowKD_03.cs" />
+    <Compile Include="wt_Turtle02.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\TradePubLib\TradePubLib.csproj">

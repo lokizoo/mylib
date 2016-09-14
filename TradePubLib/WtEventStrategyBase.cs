@@ -10,9 +10,19 @@ namespace TradePubLib
 {
     public class WtEventStrategyBase : EventStrategyBase
     {
+
+        protected string m_sInvestorID = "";
+
         public DateTime TickNow
         {
             get { return SERVERTIME; }
+        }
+
+        public override void OnStart()
+        {
+            base.OnStart();
+            m_sInvestorID = GetInvestorID();
+            
         }
 
         /// <summary>
@@ -50,6 +60,14 @@ namespace TradePubLib
             return bIsValid;
         }
 
+        /// <summary>
+        /// 开仓
+        /// </summary>
+        /// <param name="price">开仓价格</param>
+        /// <param name="volume">开仓手数</param>
+        /// <param name="slipPoint">允许的滑点</param>
+        /// <param name="direction">开仓的方向[多 || 空]</param>
+        /// <returns>对应Order的RequestID</returns>
         public int OpenOrder(double price, int volume, int slipPoint, EnumDirectionType direction)
         {
             double orderPrice = 0;
@@ -68,6 +86,54 @@ namespace TradePubLib
             }
 
             return returnValue;
+        }
+
+        /// <summary>
+        /// 平多头仓位
+        /// </summary>
+        /// <param name="price">平仓价格</param>
+        /// <param name="volume">平仓手数</param>
+        /// <param name="slipPoint">允许的滑点</param>        
+        public void CloseLongPosition(double price, int volume, int slipPoint, EnumOrderType orderType = EnumOrderType.限价单)
+        {
+            CloseFuturesPositions(SYMBOL, EnumDirectionType.Buy, price, volume, slipPoint, orderType, EnumHedgeFlag.投机);            
+        }
+
+        /// <summary>
+        /// 平空头仓位
+        /// </summary>
+        /// <param name="price">平仓价格</param>
+        /// <param name="volume">平仓手数</param>
+        /// <param name="slipPoint">允许的滑点</param>        
+        public void CloseShortPosition(double price, int volume, int slipPoint, EnumOrderType orderType = EnumOrderType.限价单)
+        {
+            CloseFuturesPositions(SYMBOL, EnumDirectionType.Sell, price, volume, slipPoint, orderType, EnumHedgeFlag.投机);            
+        }
+        /// <summary>
+        /// 获取本策略所有未成交的开仓单
+        /// </summary>
+        /// <returns></returns>
+        public List<Order> GetUnTradedOpenOrder()
+        {
+            List<Order> unTradedOrdLst = new List<Order>();
+            List<Order> ordLst = GetUnAllTradedOrderList(SYMBOL);
+            if (ordLst != null && ordLst.Count > 0)
+            {
+                //PrintMemo("有未成交单[开仓] = " + ordLst.Count.ToString());
+                foreach (Order order in ordLst)
+                {
+                    if (ORDER_KEY_LIST.Contains(order.Key))
+                    {
+                        if ((order.OffsetFlag == EnumOffsetFlagType.Open) &&
+                            (order.OrderStatus == EnumOrderStatusType.NoTradeQueueing || order.OrderStatus == EnumOrderStatusType.PartTradedQueueing))
+                        {
+                            unTradedOrdLst.Add(order);
+                        }
+                    }
+                }
+            }
+
+            return unTradedOrdLst;
         }
 
         /// <summary>
@@ -191,6 +257,21 @@ namespace TradePubLib
             }
 
             return positionSum;
+        }
+
+        public string GetInvestorID()
+        {
+            string sInvestorID = "";
+            FuturesInvestor investor = GetFuturesInvestor();
+
+            if (investor != null)
+            {
+                sInvestorID = investor.BrokerID + "." + investor.InvestorID;
+
+                if (sInvestorID == ".") sInvestorID = "backtest";                
+            }
+
+            return sInvestorID;
         }
 
         /// <summary>
