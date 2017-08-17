@@ -450,7 +450,9 @@ namespace mylib
             }
             else
             {
-                PrintMemo("时间[" +  td.Date.ToString("HH:mm:ss") + "] 的BarOpen事件不处理");                
+                PrintMemo("时间[" +  td.Date.ToString("HH:mm:ss") + "] 的BarOpen事件不处理");      
+          
+
             }
 
             // 其它动作
