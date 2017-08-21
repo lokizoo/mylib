@@ -135,6 +135,9 @@ namespace mylib
         private int m_iInCount = 0;                 // 入场次数
         private int m_iOutCount = 0;                // 平仓次数
         private STU_Indicators m_Indicators;        // 模型需要的K线数据和指标数据
+
+
+        private GF m_gf = null;                     // 通用函数对象
         
         private enum ENU_msgType
         {
@@ -370,6 +373,9 @@ namespace mylib
 
         public override void OnStart()
         {
+            // 创建通用函数对象
+            //m_gf = GF.GetGenericFun(this);
+
             m_initOK = true;
             m_PriceTick = INSTRUMENT.PriceTick;
             m_dtLastBarOpenTime = Now;
@@ -387,9 +393,11 @@ namespace mylib
             GetPosition();
 
             // 创建图表
-            CreateChart("Main;测试.w_SLOWKD(15,4,2,5)");            
-                                   
-            PrintMemo("启动完成", ENU_msgType.msg_Info);
+            CreateChart("Main;测试.w_SLOWKD(15,4,2,5)");
+
+            //m_gf.PrintMemo("启动完成[GF]", GF.ENU_msgType.msg_Info);
+
+            //PrintMemo("启动完成", ENU_msgType.msg_Info);
             //base.OnStart(); 
         }
 
@@ -398,6 +406,8 @@ namespace mylib
             //PrintTodayTrade();
 
             PrintMemo(SYMBOL + "[" + MyID + "] 停止运行");
+            m_gf = null;
+
             base.OnStop();
         }
         
@@ -434,7 +444,9 @@ namespace mylib
                 PrintMemo("初始化未成功，请修正初始化错误的原因后，重启策略", ENU_msgType.msg_Error);
                 return;
             }
+            //IO.PrintMemo("IO:时间[" + td.Date.ToString("HH:mm:ss") + "]"); 
 
+            m_gf.PrintMemo("IO:时间[" + td.Date.ToString("HH:mm:ss") + "]"); 
             PrintLine(TickNow.ToString("yyyy-MM-dd HH:mm:ss") + "[S]----------------------------------------");
             DateTime t1 = Now;
 

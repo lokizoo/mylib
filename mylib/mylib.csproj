@@ -45,6 +45,7 @@
     <Compile Include="DualMA.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Test_OnBarOpen.cs" />
+    <Compile Include="wt_B2.cs" />
     <Compile Include="wt_R_Breaker.cs" />
     <Compile Include="wt_SlowKD_03.cs" />
   </ItemGroup>

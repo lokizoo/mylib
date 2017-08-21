@@ -30,6 +30,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DevelopLibrary">
+      <HintPath>..\..\..\..\Program Files\Finance\红璟\DevelopLibrary.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -39,6 +42,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GF.cs" />
+    <Compile Include="IO.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Win32API.cs" />
   </ItemGroup>
